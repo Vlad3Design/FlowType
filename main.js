@@ -77,6 +77,13 @@ var FlowTypePlugin = class extends import_obsidian.Plugin {
         this.applyBasicAbbreviations(editor);
       }
     });
+    this.addCommand({
+      id: "spacing",
+      name: "FlowType: Spacing",
+      editorCallback: (editor, view) => {
+        this.applySpacing(editor);
+      }
+    });
     this.registerEvent(this.app.workspace.on("editor-menu", (menu, editor, view) => {
       if (editor.getSelection()) {
         menu.addSeparator();
@@ -103,6 +110,11 @@ var FlowTypePlugin = class extends import_obsidian.Plugin {
         menu.addItem((item) => {
           item.setTitle("FlowType: Basic Abbreviations").setIcon("wand").onClick(() => {
             this.applyBasicAbbreviations(editor);
+          });
+        });
+        menu.addItem((item) => {
+          item.setTitle("FlowType: Spacing").setIcon("wand").onClick(() => {
+            this.applySpacing(editor);
           });
         });
       }
@@ -150,16 +162,27 @@ var FlowTypePlugin = class extends import_obsidian.Plugin {
     let improvedText = this.applyBasicAbbreviationsLogic(selection);
     editor.replaceSelection(improvedText);
   }
+  applySpacing(editor) {
+    const selection = editor.getSelection();
+    if (!selection)
+      return;
+    let improvedText = this.applySpacingLogic(selection);
+    editor.replaceSelection(improvedText);
+  }
   applyAutoCapitalizationLogic(text) {
     if (text.length > 0 && /^[a-z]/.test(text)) {
       text = text.charAt(0).toUpperCase() + text.slice(1);
     }
-    text = text.replace(/([.!?])\s+([a-z])/g, (match, punct, letter) => {
+    text = text.replace(/([.!?])\s+([a-z])/g, (match, punct, letter, offset, str) => {
+      const before = str.slice(Math.max(0, offset - 8), offset + 1);
+      if (/(e\.g\.|i\.e\.|etc\.|Ph\.D\.|UK|US|USA)[.!?]?\s*$/i.test(before)) {
+        return punct + " " + letter;
+      }
       return punct + " " + letter.toUpperCase();
     });
     text = text.replace(/\bi\b/g, "I");
-    text = text.replace(/"([^"]*)"\s+([a-z])(?!\s+(said|asked|replied|shouted|whispered|he|she|they|dr|mr|mrs|ms|prof))/gi, (match, quote, letter) => {
-      return `"${quote}" ${letter.toUpperCase()}`;
+    text = text.replace(/(["""])\s*([a-z])/g, (match, quote, letter) => {
+      return quote + letter.toUpperCase();
     });
     text = text.replace(/:\s+([a-z])/g, (match, letter) => {
       return ": " + letter.toUpperCase();
@@ -167,21 +190,18 @@ var FlowTypePlugin = class extends import_obsidian.Plugin {
     const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
     const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
     const holidays = ["christmas", "easter", "thanksgiving", "halloween", "valentine", "independence"];
-    [...days, ...months, ...holidays].forEach((word) => {
+    const properNouns = ["oxford"];
+    [...days, ...months, ...holidays, ...properNouns].forEach((word) => {
       const regex = new RegExp(`\\b${word}\\b`, "gi");
       text = text.replace(regex, word.charAt(0).toUpperCase() + word.slice(1));
     });
     return text;
   }
   applySmartPunctuationLogic(text) {
-    text = text.replace(/([.!?])([A-Za-z])/g, "$1 $2");
-    text = text.replace(/([,:;])([A-Za-z])/g, "$1 $2");
-    text = text.replace(/"([^"]*)"([A-Za-z])/g, '"$1" $2');
-    text = text.replace(/\s+/g, " ");
-    text = text.replace(/\s*\(\s*/g, " (");
-    text = text.replace(/\s*\)\s*/g, ") ");
     text = text.replace(/\.\.\./g, "\u2026");
     text = text.replace(/\s*-\s*/g, " - ");
+    text = text.replace(/\s*\(\s*/g, " (");
+    text = text.replace(/\s*\)\s*/g, ") ");
     text = text.replace(/\s+([.,:;!?])/g, "$1");
     text = text.trim();
     return text;
@@ -235,12 +255,8 @@ var FlowTypePlugin = class extends import_obsidian.Plugin {
     return text;
   }
   applyBasicAbbreviationsLogic(text) {
-    text = text.replace(/\b(dr|mr|mrs|ms|prof|rev|sen|rep|gov|pres|ceo|cfo|cto)\.\s+([a-z])/gi, (match, title, letter) => {
-      return title.charAt(0).toUpperCase() + title.slice(1) + ". " + letter.toUpperCase();
-    });
-    text = text.replace(/\b(dr|mr|mrs|ms|prof|rev|sen|rep|gov|pres|ceo|cfo|cto)\s+([a-z]+)/gi, (match, title, name) => {
-      return title.charAt(0).toUpperCase() + title.slice(1) + " " + name.charAt(0).toUpperCase() + name.slice(1);
-    });
+    text = text.replace(/\bu\. ?k\./gi, "UK");
+    text = text.replace(/\bph\. ?d\./gi, "Ph.D.");
     text = text.replace(/\bU\. S\. A\./g, "USA");
     text = text.replace(/\bu\. s\. a\./g, "USA");
     text = text.replace(/\bU\.S\.A\./g, "USA");
@@ -254,11 +270,22 @@ var FlowTypePlugin = class extends import_obsidian.Plugin {
     text = text.replace(/\be\.\s*g\.\s*/gi, "e.g. ");
     text = text.replace(/\bvs\s*\./gi, "vs. ");
     text = text.replace(/\bUSA\.(?=\s|$)/g, "USA");
-    text = text.replace(/\bthe\s+USA\b/gi, "The USA");
-    text = text.replace(/(i\.e\.|e\.g\.|etc\.)\s+([A-Z])([a-z]*)/gi, (match, abbr, firstLetter, rest) => {
+    text = text.replace(/(^|[.!?]\s+)the\s+(UK|USA|US)\b/g, (m, before, abbr) => before + "The " + abbr);
+    text = text.replace(/\bthe\s+(UK|USA|US)\b/g, (m, abbr) => "the " + abbr);
+    text = text.replace(/(i\.e\.|e\.g\.|etc\.|Ph\.D\.|UK|US|USA)\s+([A-Z])([a-z]*)/g, (match, abbr, firstLetter, rest) => {
       return abbr + " " + firstLetter.toLowerCase() + rest;
     });
-    text = text.replace(/^\s*the\b/gi, "The");
+    return text;
+  }
+  applySpacingLogic(text) {
+    text = text.replace(/(["""''])(?!\s)([A-Z])/gu, "$1 $2");
+    text = text.replace(/([.!?]["""''])(?!\s)([A-Za-z])/gu, "$1 $2");
+    text = text.replace(/,(?!\s)(["""''])/gu, ", $1");
+    text = text.replace(/(?<!\b(?:Ph|Dr|Mr|Ms|Mrs|Prof|e|i|etc|vs))\.(?!\s)([A-Za-z])/g, ". $1");
+    text = text.replace(/([!?])(?!\s)([A-Za-z])/g, "$1 $2");
+    text = text.replace(/([,:;])(?!\s)([A-Za-z])/g, "$1 $2");
+    text = text.replace(/\s+/g, " ");
+    text = text.trim();
     return text;
   }
 };
@@ -331,12 +358,21 @@ var FlowTypeSettingTab = class extends import_obsidian.PluginSettingTab {
     abbrevExample.createEl("br");
     abbrevExample.createEl("span", { text: "Output: ", cls: "flowtype-example-label" });
     abbrevExample.createEl("code", { text: "The USA is big. Dr Smith. i.e. means." });
+    new import_obsidian.Setting(containerEl).setName("Spacing").setDesc("Dedicated spacing corrections for dialogue, punctuation, and quotes. Use this if you want to fix only spacing issues, without affecting punctuation or capitalization.");
+    const spacingExample = containerEl.createEl("div", { cls: "setting-item-description" });
+    spacingExample.createEl("strong", { text: "Example:" });
+    spacingExample.createEl("br");
+    spacingExample.createEl("span", { text: "Before: ", cls: "flowtype-example-label" });
+    spacingExample.createEl("code", { text: `On Monday, Dr Brown said: "Good morning! How are you today?"Mr Smith replied,"I'm fine, thanks. Prof Jones will arrive at 1,500 dollars per session. He's from The UK and has a Ph.D. in linguistics. e.g. he studied at Oxford. i.e. he's an expert."` });
+    spacingExample.createEl("br");
+    spacingExample.createEl("span", { text: "After: ", cls: "flowtype-example-label" });
+    spacingExample.createEl("code", { text: `On Monday, Dr Brown said: "Good morning! How are you today?" Mr Smith replied, "I'm fine, thanks. Prof Jones will arrive at 1,500 dollars per session. He's from The UK and has a Ph.D. in linguistics. e.g. he studied at Oxford. i.e. he's an expert."` });
     const usageDiv = containerEl.createEl("div", { cls: "setting-item" });
     usageDiv.createEl("h3", { text: "How to Use" });
     const usageDesc = usageDiv.createEl("div", { cls: "setting-item-description" });
     usageDesc.createEl("p", { text: "1. Select text in your note" });
     usageDesc.createEl("p", { text: "2. Right-click and choose a FlowType option from the context menu" });
     usageDesc.createEl("p", { text: '3. Or use Command Palette (Ctrl/Cmd + P) and search for "FlowType"' });
-    usageDesc.createEl("p", { text: "4. Recommended order: Smart Punctuation \u2192 Basic Abbreviations \u2192 Number Formatting \u2192 Smart Quotes" });
+    usageDesc.createEl("p", { text: "4. Recommended order: Spacing \u2192 Smart Punctuation \u2192 Basic Abbreviations \u2192 Number Formatting \u2192 Smart Quotes" });
   }
 };
