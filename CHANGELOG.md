@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch processing for multiple files
 - Integration with writing style guides
 
-## [1.0.0] - 2025-01-XX
+## [1.0.0] - 2025-06-30
 
 ### Added
 - **Auto Capitalization**: Automatic sentence and proper noun capitalization
@@ -95,7 +95,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All features are new, no migration required
 - Settings are automatically configured with defaults
 - No breaking changes
-
----
-
-For more detailed information about each release, please refer to the [GitHub Releases](https://github.com/Vlad3Design/obsidian-flowtype/releases) page. 
