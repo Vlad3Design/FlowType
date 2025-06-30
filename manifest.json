@@ -1,0 +1,23 @@
+{
+  "id": "flowtype",
+  "name": "FlowType",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Professional text enhancement plugin for English writers. Features smart punctuation, auto capitalization, number formatting, and abbreviation corrections.",
+  "author": "Vlad 3Design",
+  "authorUrl": "https://github.com/Vlad3Design",
+  "isDesktopOnly": false,
+  "repository": "Vlad3Design/obsidian-flowtype",
+  "repositoryUrl": "https://github.com/Vlad3Design/obsidian-flowtype",
+  "fundingUrl": "https://github.com/Vlad3Design",
+  "keywords": [
+    "text-enhancement",
+    "writing",
+    "punctuation",
+    "capitalization",
+    "typography",
+    "abbreviations",
+    "number-formatting",
+    "smart-quotes"
+  ]
+} 
