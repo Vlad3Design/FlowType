@@ -53,6 +53,17 @@ Input:  the u. s. a. is big. dr smith. i.e. Means.
 Output: The USA is big. Dr Smith. i.e. means.
 ```
 
+
+### 🪄 Spacing (Dialogue & Punctuation)
+Dedicated function to fix missing spaces after quotes, dialogue, and punctuation—without affecting other features. Especially useful for correcting text like dialogue between characters.
+
+**Example:**
+```
+
+Before: On Monday, Dr Brown said: "Good morning! How are you today?"Mr Smith replied,"I'm fine, thanks."
+After:  On Monday, Dr Brown said: "Good morning! How are you today?" Mr Smith replied, "I'm fine, thanks."
+```
+
 ## 🚀 Installation
 
 ### From Obsidian Community Plugins (NOT AVAILABLE YET)
