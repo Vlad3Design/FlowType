@@ -2,7 +2,7 @@
 
 > **Professional text enhancement plugin for English writers** ✨
 
-![Plugin Preview](https://img.shields.io/badge/Obsidian-Plugin-purple) ![License](https://img.shields.io/badge/License-MIT-green) ![Version](https://img.shields.io/badge/Version-1.2.6-blue)
+![Plugin Preview](https://img.shields.io/badge/Obsidian-Plugin-purple) ![License](https://img.shields.io/badge/License-MIT-green) ![Version](https://img.shields.io/badge/Version-1.0.0-blue)
 
 **FlowType** is a comprehensive text enhancement plugin for Obsidian that helps English writers improve their text quality through intelligent automation. From smart punctuation to professional abbreviation formatting, FlowType transforms your writing workflow.
 
