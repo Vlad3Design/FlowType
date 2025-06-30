@@ -1,5 +1,7 @@
 # FlowType for Obsidian
 
+![Image](FlowType%20Banner%20PSD.jpg)
+
 > **Text enhancement plugin for English writers** ✨
 
 ![Plugin Preview](https://img.shields.io/badge/Obsidian-Plugin-purple) ![License](https://img.shields.io/badge/License-MIT-green) ![Version](https://img.shields.io/badge/Version-1.0.0-blue)
