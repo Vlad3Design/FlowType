@@ -2,9 +2,7 @@
 
 > **Professional text enhancement plugin for English writers** ✨
 
-[![GitHub release](https://img.shields.io/github/v/release/Vlad3Design/obsidian-flowtype)](https://github.com/Vlad3Design/obsidian-flowtype/releases)
-[![GitHub license](https://img.shields.io/github/license/Vlad3Design/obsidian-flowtype)](https://github.com/Vlad3Design/obsidian-flowtype/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/Vlad3Design/obsidian-flowtype)](https://github.com/Vlad3Design/obsidian-flowtype/stargazers)
+![Plugin Preview](https://img.shields.io/badge/Obsidian-Plugin-purple) ![License](https://img.shields.io/badge/License-MIT-green) ![Version](https://img.shields.io/badge/Version-1.2.6-blue)
 
 **FlowType** is a comprehensive text enhancement plugin for Obsidian that helps English writers improve their text quality through intelligent automation. From smart punctuation to professional abbreviation formatting, FlowType transforms your writing workflow.
 
@@ -57,7 +55,7 @@ Output: The USA is big. Dr Smith. i.e. means.
 
 ## 🚀 Installation
 
-### From Obsidian Community Plugins
+### From Obsidian Community Plugins (NOT AVAILABLE YET)
 1. Open Obsidian Settings
 2. Go to Community Plugins
 3. Turn off Safe mode
@@ -168,6 +166,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Made with ❤️ for the Obsidian community**
-
-[![GitHub stars](https://img.shields.io/github/stars/Vlad3Design/obsidian-flowtype?style=social)](https://github.com/Vlad3Design/obsidian-flowtype/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Vlad3Design/obsidian-flowtype?style=social)](https://github.com/Vlad3Design/obsidian-flowtype/network/members) 
