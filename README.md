@@ -92,6 +92,8 @@ After:  On Monday, Dr Brown said: "Good morning! How are you today?" Mr Smith re
    - **FlowType: Smart Quotes**
    - **FlowType: Number Formatting**
    - **FlowType: Basic Abbreviations**
+  
+![Image](FlowTypeHowToUse.jpg)
 
 ### Command Palette
 1. Press `Ctrl/Cmd + P` to open Command Palette
