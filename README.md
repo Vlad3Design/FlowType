@@ -1,6 +1,6 @@
 # FlowType for Obsidian
 
-![Image](FlowType%20Banner%20PSD.jpg)
+![Image](FlowType.jpg)
 
 > **Text enhancement plugin for English writers** ✨
 
