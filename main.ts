@@ -25,7 +25,7 @@ export default class FlowTypePlugin extends Plugin {
 		// Auto Capitalization
 		this.addCommand({
 			id: 'auto-capitalization',
-			name: 'FlowType: Auto Capitalization',
+			name: 'Auto Capitalization',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.applyAutoCapitalization(editor);
 			}
@@ -34,7 +34,7 @@ export default class FlowTypePlugin extends Plugin {
 		// Smart Punctuation
 		this.addCommand({
 			id: 'smart-punctuation',
-			name: 'FlowType: Smart Punctuation',
+			name: 'Smart Punctuation',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.applySmartPunctuation(editor);
 			}
@@ -43,7 +43,7 @@ export default class FlowTypePlugin extends Plugin {
 		// Smart Quotes
 		this.addCommand({
 			id: 'smart-quotes',
-			name: 'FlowType: Smart Quotes',
+			name: 'Smart Quotes',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.applySmartQuotes(editor);
 			}
@@ -52,7 +52,7 @@ export default class FlowTypePlugin extends Plugin {
 		// Number Formatting
 		this.addCommand({
 			id: 'number-formatting',
-			name: 'FlowType: Number Formatting',
+			name: 'Number Formatting',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.applyNumberFormatting(editor);
 			}
@@ -61,9 +61,18 @@ export default class FlowTypePlugin extends Plugin {
 		// Basic Abbreviations
 		this.addCommand({
 			id: 'basic-abbreviations',
-			name: 'FlowType: Basic Abbreviations',
+			name: 'Basic Abbreviations',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				this.applyBasicAbbreviations(editor);
+			}
+		});
+
+		// Spacing
+		this.addCommand({
+			id: 'spacing',
+			name: 'Spacing',
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				this.applySpacing(editor);
 			}
 		});
 
@@ -73,38 +82,45 @@ export default class FlowTypePlugin extends Plugin {
 				if (editor.getSelection()) {
 					menu.addSeparator();
 					menu.addItem((item) => {
-						item.setTitle('FlowType: Auto Capitalization')
+						item.setTitle('Auto Capitalization')
 							.setIcon('wand')
 							.onClick(() => {
 								this.applyAutoCapitalization(editor);
 							});
 					});
 					menu.addItem((item) => {
-						item.setTitle('FlowType: Smart Punctuation')
+						item.setTitle('Smart Punctuation')
 							.setIcon('wand')
 							.onClick(() => {
 								this.applySmartPunctuation(editor);
 							});
 					});
 					menu.addItem((item) => {
-						item.setTitle('FlowType: Smart Quotes')
+						item.setTitle('Smart Quotes')
 							.setIcon('wand')
 							.onClick(() => {
 								this.applySmartQuotes(editor);
 							});
 					});
 					menu.addItem((item) => {
-						item.setTitle('FlowType: Number Formatting')
+						item.setTitle('Number Formatting')
 							.setIcon('wand')
 							.onClick(() => {
 								this.applyNumberFormatting(editor);
 							});
 					});
 					menu.addItem((item) => {
-						item.setTitle('FlowType: Basic Abbreviations')
+						item.setTitle('Basic Abbreviations')
 							.setIcon('wand')
 							.onClick(() => {
 								this.applyBasicAbbreviations(editor);
+							});
+					});
+					menu.addItem((item) => {
+						item.setTitle('Spacing')
+							.setIcon('wand')
+							.onClick(() => {
+								this.applySpacing(editor);
 							});
 					});
 				}
@@ -162,6 +178,13 @@ export default class FlowTypePlugin extends Plugin {
 		editor.replaceSelection(improvedText);
 	}
 
+	applySpacing(editor: Editor) {
+		const selection = editor.getSelection();
+		if (!selection) return;
+		let improvedText = this.applySpacingLogic(selection);
+		editor.replaceSelection(improvedText);
+	}
+
 	applyAutoCapitalizationLogic(text: string): string {
 		// Capitalize first letter of the entire text if it starts with lowercase
 		if (text.length > 0 && /^[a-z]/.test(text)) {
@@ -169,16 +192,21 @@ export default class FlowTypePlugin extends Plugin {
 		}
 
 		// Capitalize first letter after sentence endings (.!?)
-		text = text.replace(/([.!?])\s+([a-z])/g, (match, punct, letter) => {
+		text = text.replace(/([.!?])\s+([a-z])/g, (match, punct, letter, offset, str) => {
+			// Don't capitalize after e.g., i.e., etc., Ph.D., UK, US, USA
+			const before = str.slice(Math.max(0, offset - 8), offset + 1);
+			if (/(e\.g\.|i\.e\.|etc\.|Ph\.D\.|UK|US|USA)[.!?]?\s*$/i.test(before)) {
+				return punct + ' ' + letter;
+			}
 			return punct + ' ' + letter.toUpperCase();
 		});
 
 		// Capitalize "I" when alone
 		text = text.replace(/\bi\b/g, 'I');
 
-		// Capitalize first letter after dialogue quotes (but not after dialogue tags)
-		text = text.replace(/"([^"]*)"\s+([a-z])(?!\s+(said|asked|replied|shouted|whispered|he|she|they|dr|mr|mrs|ms|prof))/gi, (match, quote, letter) => {
-			return `"${quote}" ${letter.toUpperCase()}`;
+		// Capitalize first letter after dialogue quotes (straight or curly)
+		text = text.replace(/(["""])\s*([a-z])/g, (match, quote, letter) => {
+			return quote + letter.toUpperCase();
 		});
 
 		// Capitalize after colon when followed by complete sentence
@@ -186,12 +214,13 @@ export default class FlowTypePlugin extends Plugin {
 			return ': ' + letter.toUpperCase();
 		});
 
-		// Capitalize days, months, holidays
+		// Capitalize days, months, holidays, and Oxford
 		const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 		const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 		const holidays = ['christmas', 'easter', 'thanksgiving', 'halloween', 'valentine', 'independence'];
+		const properNouns = ['oxford'];
 
-		[...days, ...months, ...holidays].forEach(word => {
+		[...days, ...months, ...holidays, ...properNouns].forEach(word => {
 			const regex = new RegExp(`\\b${word}\\b`, 'gi');
 			text = text.replace(regex, word.charAt(0).toUpperCase() + word.slice(1));
 		});
@@ -200,32 +229,18 @@ export default class FlowTypePlugin extends Plugin {
 	}
 
 	applySmartPunctuationLogic(text: string): string {
-		// Add space after punctuation marks when followed by letter (no space exists)
-		text = text.replace(/([.!?])([A-Za-z])/g, '$1 $2');
-		text = text.replace(/([,:;])([A-Za-z])/g, '$1 $2');
-
-		// Add space after quotes when followed by letter (no space exists)
-		text = text.replace(/"([^"]*)"([A-Za-z])/g, '"$1" $2');
-
-		// Remove multiple spaces and replace with single space
-		text = text.replace(/\s+/g, ' ');
-
+		// Elimin regex-urile de spațiere, păstrez doar corecțiile de punctuație
+		// Replace three dots with ellipsis
+		text = text.replace(/\.\.\./g, '…');
+		// Fix spacing around dashes
+		text = text.replace(/\s*-\s*/g, ' - ');
 		// Fix spacing around parentheses
 		text = text.replace(/\s*\(\s*/g, ' (');
 		text = text.replace(/\s*\)\s*/g, ') ');
-
-		// Replace three dots with ellipsis
-		text = text.replace(/\.\.\./g, '…');
-
-		// Fix spacing around dashes
-		text = text.replace(/\s*-\s*/g, ' - ');
-
 		// Remove extra spaces before punctuation
 		text = text.replace(/\s+([.,:;!?])/g, '$1');
-
 		// Trim extra spaces at the beginning and end
 		text = text.trim();
-
 		return text;
 	}
 
@@ -299,15 +314,9 @@ export default class FlowTypePlugin extends Plugin {
 	}
 
 	applyBasicAbbreviationsLogic(text: string): string {
-		// Capitalize common titles and names (with periods)
-		text = text.replace(/\b(dr|mr|mrs|ms|prof|rev|sen|rep|gov|pres|ceo|cfo|cto)\.\s+([a-z])/gi, (match, title, letter) => {
-			return title.charAt(0).toUpperCase() + title.slice(1) + '. ' + letter.toUpperCase();
-		});
-
-		// Capitalize names after titles (without periods) - capture the full name
-		text = text.replace(/\b(dr|mr|mrs|ms|prof|rev|sen|rep|gov|pres|ceo|cfo|cto)\s+([a-z]+)/gi, (match, title, name) => {
-			return title.charAt(0).toUpperCase() + title.slice(1) + ' ' + name.charAt(0).toUpperCase() + name.slice(1);
-		});
+		// Special abbreviations (UK, Ph.D., etc.)
+		text = text.replace(/\bu\. ?k\./gi, 'UK');
+		text = text.replace(/\bph\. ?d\./gi, 'Ph.D.');
 
 		// Standardize common abbreviations FIRST (more explicit patterns)
 		text = text.replace(/\bU\. S\. A\./g, 'USA');
@@ -316,7 +325,6 @@ export default class FlowTypePlugin extends Plugin {
 		text = text.replace(/\bu\.s\.a\./g, 'USA');
 		text = text.replace(/\bU\.\s*S\.\s*A\./g, 'USA');
 		text = text.replace(/\bu\.\s*s\.\s*a\./g, 'USA');
-		
 		text = text.replace(/\bU\.\s*K\./g, 'UK');
 		text = text.replace(/\bU\.\s*S\./g, 'US');
 
@@ -329,17 +337,42 @@ export default class FlowTypePlugin extends Plugin {
 		// Remove extra period after USA
 		text = text.replace(/\bUSA\.(?=\s|$)/g, 'USA');
 
-		// Now handle capitalization
-		text = text.replace(/\bthe\s+USA\b/gi, 'The USA');
+		// Now handle capitalization for abbreviations (only at start of sentence)
+		text = text.replace(/(^|[.!?]\s+)the\s+(UK|USA|US)\b/g, (m, before, abbr) => before + 'The ' + abbr);
+		// Lowercase 'the' before UK/USA/US elsewhere
+		text = text.replace(/\bthe\s+(UK|USA|US)\b/g, (m, abbr) => 'the ' + abbr);
 
 		// Capitalize after abbreviations (but keep first letter after i.e./e.g./etc. lowercase)
-		text = text.replace(/(i\.e\.|e\.g\.|etc\.)\s+([A-Z])([a-z]*)/gi, (match, abbr, firstLetter, rest) => {
+		text = text.replace(/(i\.e\.|e\.g\.|etc\.|Ph\.D\.|UK|US|USA)\s+([A-Z])([a-z]*)/g, (match, abbr, firstLetter, rest) => {
 			return abbr + ' ' + firstLetter.toLowerCase() + rest;
 		});
 
-		// General capitalization for "the" at start of sentence
-		text = text.replace(/^\s*the\b/gi, 'The');
+		return text;
+	}
 
+	applySpacingLogic(text: string): string {
+		// 1. Space after closing quotes when followed by a letter (dialogue spacing)
+		text = text.replace(/(["""''])(?!\s)([A-Z])/gu, '$1 $2');
+		
+		// 2. Space after punctuation + closing quotes when followed by letter
+		text = text.replace(/([.!?]["""''])(?!\s)([A-Za-z])/gu, '$1 $2');
+		
+		// 3. Space after comma when followed by opening quotes (dialogue)
+		text = text.replace(/,(?!\s)(["""''])/gu, ', $1');
+		
+		// 4. Space after period, but not in abbreviations
+		text = text.replace(/(?<!\b(?:Ph|Dr|Mr|Ms|Mrs|Prof|e|i|etc|vs))\.(?!\s)([A-Za-z])/g, '. $1');
+		
+		// 5. Space after other punctuation marks
+		text = text.replace(/([!?])(?!\s)([A-Za-z])/g, '$1 $2');
+		text = text.replace(/([,:;])(?!\s)([A-Za-z])/g, '$1 $2');
+		
+		// 6. Normalize multiple spaces
+		text = text.replace(/\s+/g, ' ');
+		
+		// 7. Trim whitespace
+		text = text.trim();
+		
 		return text;
 	}
 }
@@ -367,8 +400,6 @@ class FlowTypeSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableAutoCapitalization = value;
 					await this.plugin.saveSettings();
 				}));
-
-		// Add example for Auto Capitalization
 		const autoCapExample = containerEl.createEl('div', {cls: 'setting-item-description'});
 		autoCapExample.createEl('strong', {text: 'Example:'});
 		autoCapExample.createEl('br');
@@ -387,8 +418,6 @@ class FlowTypeSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableSmartPunctuation = value;
 					await this.plugin.saveSettings();
 				}));
-
-		// Add example for Smart Punctuation
 		const smartPuncExample = containerEl.createEl('div', {cls: 'setting-item-description'});
 		smartPuncExample.createEl('strong', {text: 'Example:'});
 		smartPuncExample.createEl('br');
@@ -407,8 +436,6 @@ class FlowTypeSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableSmartQuotes = value;
 					await this.plugin.saveSettings();
 				}));
-
-		// Add example for Smart Quotes
 		const smartQuotesExample = containerEl.createEl('div', {cls: 'setting-item-description'});
 		smartQuotesExample.createEl('strong', {text: 'Example:'});
 		smartQuotesExample.createEl('br');
@@ -427,8 +454,6 @@ class FlowTypeSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableNumberFormatting = value;
 					await this.plugin.saveSettings();
 				}));
-
-		// Add example for Number Formatting
 		const numberExample = containerEl.createEl('div', {cls: 'setting-item-description'});
 		numberExample.createEl('strong', {text: 'Example:'});
 		numberExample.createEl('br');
@@ -447,8 +472,6 @@ class FlowTypeSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableBasicAbbreviations = value;
 					await this.plugin.saveSettings();
 				}));
-
-		// Add example for Basic Abbreviations
 		const abbrevExample = containerEl.createEl('div', {cls: 'setting-item-description'});
 		abbrevExample.createEl('strong', {text: 'Example:'});
 		abbrevExample.createEl('br');
@@ -458,6 +481,19 @@ class FlowTypeSettingTab extends PluginSettingTab {
 		abbrevExample.createEl('span', {text: 'Output: ', cls: 'flowtype-example-label'});
 		abbrevExample.createEl('code', {text: 'The USA is big. Dr Smith. i.e. means.'});
 
+		// Spacing
+		new Setting(containerEl)
+			.setName('Spacing')
+			.setDesc('Dedicated spacing corrections for dialogue, punctuation, and quotes. Use this if you want to fix only spacing issues, without affecting punctuation or capitalization.')
+		const spacingExample = containerEl.createEl('div', {cls: 'setting-item-description'});
+		spacingExample.createEl('strong', {text: 'Example:'});
+		spacingExample.createEl('br');
+		spacingExample.createEl('span', {text: 'Before: ', cls: 'flowtype-example-label'});
+		spacingExample.createEl('code', {text: 'On Monday, Dr Brown said: \"Good morning! How are you today?\"Mr Smith replied,\"I\'m fine, thanks. Prof Jones will arrive at 1,500 dollars per session. He\'s from The UK and has a Ph.D. in linguistics. e.g. he studied at Oxford. i.e. he\'s an expert.\"'});
+		spacingExample.createEl('br');
+		spacingExample.createEl('span', {text: 'After: ', cls: 'flowtype-example-label'});
+		spacingExample.createEl('code', {text: 'On Monday, Dr Brown said: \"Good morning! How are you today?\" Mr Smith replied, \"I\'m fine, thanks. Prof Jones will arrive at 1,500 dollars per session. He\'s from The UK and has a Ph.D. in linguistics. e.g. he studied at Oxford. i.e. he\'s an expert.\"'});
+
 		// Add usage instructions
 		const usageDiv = containerEl.createEl('div', {cls: 'setting-item'});
 		usageDiv.createEl('h3', {text: 'How to Use'});
@@ -465,6 +501,6 @@ class FlowTypeSettingTab extends PluginSettingTab {
 		usageDesc.createEl('p', {text: '1. Select text in your note'});
 		usageDesc.createEl('p', {text: '2. Right-click and choose a FlowType option from the context menu'});
 		usageDesc.createEl('p', {text: '3. Or use Command Palette (Ctrl/Cmd + P) and search for "FlowType"'});
-		usageDesc.createEl('p', {text: '4. Recommended order: Smart Punctuation → Basic Abbreviations → Number Formatting → Smart Quotes'});
+		usageDesc.createEl('p', {text: '4. Recommended order: Spacing → Smart Punctuation → Basic Abbreviations → Number Formatting → Smart Quotes'});
 	}
 } 
